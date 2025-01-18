@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Site, SiteStatusHistory
+from .models import Site, SiteStatusHistory, Webhook
 # Register your models here.
 @admin.register(Site)
 class SiteAdmin(admin.ModelAdmin):
@@ -8,4 +8,7 @@ class SiteAdmin(admin.ModelAdmin):
 @admin.register(SiteStatusHistory)
 class SiteStatusHistoryAdmin(admin.ModelAdmin):
     list_display = ['site', 'status', 'response_time_ms', 'checked_at', 'status_change']
-    
+
+@admin.register(Webhook)
+class WebhookAdmin(admin.ModelAdmin):
+    list_display = ['url', 'description']
