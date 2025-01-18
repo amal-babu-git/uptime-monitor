@@ -7,3 +7,4 @@ class MonitorConfig(AppConfig):
 
     def ready(self):
         import monitor.signals
+        import monitor.tasks

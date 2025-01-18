@@ -158,3 +158,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CELERY_BROKER_URL = 'redis://redis:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+CELERY_BEAT_SCHEDULE = {
+    'check-site-status-every-10-minutes': {
+        'task': 'monitor.tasks.check_site_status',
+        'schedule': 200.0,  # every 5 minutes
+    },
+    'print-hello-every-minute': {
+        'task': 'monitor.tasks.print_hello',
+        'schedule': 10.0,  # every minute
+    },
+}

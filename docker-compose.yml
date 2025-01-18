@@ -1,27 +1,36 @@
+version: '3.9'
+
 services:
-  app:  
+  app:
     build: 
       context: .
-    command: >
-      sh -c "python manage.py wait_for_db && 
+    command: > 
+             sh - c "python manage.py wait_for_db && 
              python manage.py migrate && 
-             python manage.py runserver 0.0.0.0:8000"
+             python manage.py runserver  0.0.0.0:8000"
     ports:
       - 8000:8000
     volumes:
       - ./app:/app
       - ./data/web:/vol/web
+      - ./wait-for-it.sh:/wait-for-it.sh
     environment:
+      - DJANGO_SETTINGS_MODULE=app.settings
       - SECRET_KEY=django-insecure-*4=x=sgfb^i#%tr5y72#5=pd8f!i%b8-#ize6p=ddgk--%h&uZ
       - DEBUG=1
       - DB_HOST=db
       - DB_NAME=devdb
       - DB_USER=devuser
       - DB_PASS=changeme
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
       - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
       - db
       - redis
+      - celery
+      - celery-beat
 
   db:
     image: postgres:14.5-alpine3.16
@@ -29,19 +38,38 @@ services:
       - POSTGRES_DB=devdb
       - POSTGRES_USER=devuser
       - POSTGRES_PASSWORD=changeme
+    ports:
+      - 5432:5432
 
   redis:
     image: redis:6.2-alpine
+    ports:
+      - 6379:6379
 
   celery:
-    build: 
-      context: .
+    build: .
     command: celery -A app worker --loglevel=info
     volumes:
       - ./app:/app
+      - ./wait-for-it.sh:/wait-for-it.sh
     environment:
+      - DJANGO_SETTINGS_MODULE=app.settings
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
-      - redis
       - db
+      - redis
+
+  celery-beat:
+    build: .
+    command: celery -A app beat --loglevel=info
+    volumes:
+      - ./app:/app
+      - ./wait-for-it.sh:/wait-for-it.sh
+    environment:
+      - DJANGO_SETTINGS_MODULE=app.settings
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
