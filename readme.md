@@ -38,18 +38,21 @@ Ensure the following are installed on your local machine:
 To quickly set up and run the application with Docker, follow these steps:
 
 1. Clone this repository and Setup:
-   ```bash
-   git clone https://github.com/amal-babu-git/uptime-monitor.git 
+    ```bash
+    git clone https://github.com/amal-babu-git/uptime-monitor.git 
 
-   cd uptime-monitor
+    cd uptime-monitor
 
-   docker-compose build
+    docker-compose build
 
-   docker-compose up
-```
+    docker-compose up
+    ```
+
+2. Copy the `.env.sample` file to `.env` and adjust the environment variables as needed:
+    ```bash
+    cp .env.sample .env
+    ```
 
 * You can now access the application at http://localhost:8000.
 * admin : http://localhost:8000/admin
 * API endpoints: http://localhost:8000/monitor
-
-
