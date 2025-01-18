@@ -4,9 +4,9 @@ from .models import Site, SiteStatusHistory
 class SiteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Site
-        fields = ['id', 'url', 'name', 'check_interval_seconds', 'expected_status_code', 'created_at']
+        fields = ['id', 'url', 'name', 'check_interval_seconds', 'expected_status_code', ]
 
 class SiteStatusHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = SiteStatusHistory
-        fields = ['status', 'response_time_ms', 'checked_at', 'status_change']
+        fields = ['status', 'response_time_ms', 'status_change']

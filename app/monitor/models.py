@@ -13,3 +13,8 @@ class SiteStatusHistory(models.Model):
     response_time_ms = models.IntegerField()
     checked_at = models.DateTimeField(auto_now_add=True)
     status_change = models.BooleanField(default=False)
+
+class Webhook(models.Model):
+    url = models.URLField(unique=True)
+    description = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
