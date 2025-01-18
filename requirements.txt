@@ -1,0 +1,9 @@
+Django
+djangorestframework
+django-cors-headers
+redis
+celery
+psycopg2-binary
+requests
+django-celery-beat
+uWSGI

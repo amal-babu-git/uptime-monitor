@@ -1,0 +1,21 @@
+# Git
+.git
+.gitignore
+.local
+# Docker
+.docker
+
+# Python
+app/__pycache__/
+app/*/__pycache__/
+app/*/*/__pycache__/
+app/*/*/*/__pycache__/
+.env/
+.venv/
+venv/
+
+# Local PostgreSQL data
+data/
+Pipfile
+Pipfile.lock
+onshop-backend-django.code-workspace
