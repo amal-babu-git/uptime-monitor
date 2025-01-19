@@ -9,6 +9,7 @@ logging.basicConfig(level=logging.INFO)
 
 @shared_task
 def check_site_status():
+    logger.info("Starting task: check_site_status")
     sites = Site.objects.all()
     for site in sites:
         try:
@@ -19,16 +20,43 @@ def check_site_status():
             last_history = SiteStatusHistory.objects.filter(site=site).order_by('-checked_at').first()
             status_change = not last_history or last_history.status != current_status
 
-            # Print statements for debugging
-            print(f"Checked {site.name}: status={current_status}, response_time={response_time} ms, status_change={status_change}")
+            # Create history entry
+            SiteStatusHistory.objects.create(
+                site=site,
+                status=current_status,
+                response_time_ms=response_time,
+                status_change=status_change
+            )
+
             logger.info(f"Checked {site.name}: status={current_status}, response_time={response_time} ms, status_change={status_change}")
 
-            if current_status == 'down':
-                notify_discord.delay(site.name, current_status, "Site is unreachable.")
-        except Exception as e:
-            print(f"Error checking {site.name}: {e}")
-            logger.error(f"Error checking {site.name}: {e}. Site marked as down and notification sent.")
+            # Notify if status changed (either up or down)
+            if status_change:
+                message = "Site is back online." if current_status == 'up' else "Site is unreachable."
+                notify_discord.delay(site.name, current_status, message)
 
+        except requests.RequestException as e:
+            current_status = 'down'
+            response_time = 0
+            
+            # Check if this is a status change
+            last_history = SiteStatusHistory.objects.filter(site=site).order_by('-checked_at').first()
+            status_change = not last_history or last_history.status != current_status
+
+            # Create history entry for error
+            SiteStatusHistory.objects.create(
+                site=site,
+                status=current_status,
+                response_time_ms=response_time,
+                status_change=status_change
+            )
+
+            error_message = f"Error checking {site.name}: {str(e)}"
+            logger.error(error_message)
+            
+            if status_change:
+                notify_discord.delay(site.name, current_status, f"Site is unreachable: {str(e)}")
+    logger.info("Finished task: check_site_status")
 @shared_task
 def notify_discord(site_name, status, message):
     print(f"Starting task: notify_discord for {site_name}")
