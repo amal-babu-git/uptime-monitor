@@ -85,6 +85,9 @@ To deploy this application on a VPS (e.g., DigitalOcean Droplets or AWS EC2), fo
       ```bash
       git clone https://github.com/amal-babu-git/uptime-monitor.git
       cd uptime-monitor
+
+      setup .env
+      cp .env.sample .env
       ```
 
 4. **Setup SSL with Certbot**:

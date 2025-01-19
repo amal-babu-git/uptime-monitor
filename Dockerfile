@@ -10,6 +10,10 @@ COPY ./scripts /scripts
 WORKDIR /app
 EXPOSE 8000
 
+RUN mkdir -p /var/run/celery && \
+    chown -R app:app /var/run/celery && \
+    chmod -R 755 /var/run/celery
+
 RUN python -m venv /py && \ 
     /py/bin/pip install --upgrade pip && \
     apk add --update --no-cache postgresql-client && \

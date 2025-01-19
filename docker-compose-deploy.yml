@@ -1,44 +1,38 @@
 version: '3.9'
 
+x-common-variables: &common-variables
+  DB_HOST: db
+  DB_NAME: ${DB_NAME}
+  DB_USER: ${DB_USER}
+  DB_PASS: ${DB_PASS}
+  DJANGO_SETTINGS_MODULE: app.settings
+  CELERY_BROKER_URL: redis://redis:6379/0
+  CELERY_RESULT_BACKEND: redis://redis:6379/0
+
 services:
   app:
     build:
       context: .
     restart: always
+    networks:
+      - app-network
     volumes:
       - static-data:/vol/web
     environment:
-      - DB_HOST=db
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
-      - SECRET_KEY=${SECRET_KEY}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
-      - DJANGO_SETTINGS_MODULE=app.settings
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      <<: *common-variables
+      SECRET_KEY: ${SECRET_KEY}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          cpus: '0.75'
-          memory: 512M
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
   db:
     image: postgres:14.5-alpine3.16
     restart: always
+    networks:
+      - app-network
     volumes:
       - postgres-data:/var/lib/postgresql/data
     environment:
@@ -50,45 +44,31 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 1G
-    networks:
-      - app-network
-    security_opt:
-      - no-new-privileges:true
 
   proxy:
     build:
       context: ./proxy
     restart: always
-    depends_on:
-      - app
+    networks:
+      - app-network
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - static-data:/vol/static:ro
-      - certbot-web:/vol/www:ro
-      - proxy-dhparams:/vol/proxy:ro
-      - certbot-certs:/etc/letsencrypt:ro
+      - static-data:/vol/static
+      - certbot-web:/vol/www
+      - proxy-dhparams:/vol/proxy
+      - certbot-certs:/etc/letsencrypt
     environment:
       - DOMAIN=${DOMAIN}
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-    security_opt:
-      - no-new-privileges:true
+    depends_on:
+      - app
 
   redis:
     image: redis:6.2-alpine
     restart: always
+    networks:
+      - app-network
     volumes:
       - redis-data:/data
     healthcheck:
@@ -96,81 +76,48 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-    security_opt:
-      - no-new-privileges:true
 
   celery:
     build:
       context: .
     command: celery -A app worker --loglevel=info
     restart: always
+    networks:
+      - app-network
     volumes:
-      - ./app:/app:ro
+      - ./app:/app
+      - celerybeat-data:/var/run/celery
     environment:
-      - DB_HOST=db
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
-      - DJANGO_SETTINGS_MODULE=app.settings
-      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
+      <<: *common-variables
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.75'
-          memory: 512M
-    security_opt:
-      - no-new-privileges:true
 
   celery-beat:
     build:
       context: .
     command: celery -A app beat --loglevel=info
     restart: always
+    networks:
+      - app-network
     volumes:
-      - ./app:/app:ro
+      - ./app:/app
     environment:
-      - DB_HOST=db
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
-      - DJANGO_SETTINGS_MODULE=app.settings
-      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
+      <<: *common-variables
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.25'
-          memory: 256M
-    security_opt:
-      - no-new-privileges:true
 
   certbot:
     build:
       context: ./certbot
     command: echo "Skipping..."
+    networks:
+      - app-network
     environment:
       - EMAIL=${ACME_DEFAULT_EMAIL}
       - DOMAIN=${DOMAIN}
@@ -179,27 +126,17 @@ services:
       - certbot-certs:/etc/letsencrypt/
     depends_on:
       - proxy
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 128M
 
 volumes:
   postgres-data:
-    driver: local
   static-data:
-    driver: local
   certbot-web:
-    driver: local
   proxy-dhparams:
-    driver: local
   certbot-certs:
-    driver: local
   redis-data:
-    driver: local
-
+  celerybeat-data:
+    
 networks:
   app-network:
+    name: app-network
     driver: bridge
