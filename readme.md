@@ -4,8 +4,8 @@ This project provides a simple uptime monitoring service that checks the availab
 
 ### Live Server
 
-* admin: https://monitor.amalbabu.live/admin/
-* API: https://monitor.amalbabu.live/monitor/
+* admin: https://uptime.amalbabu.live/admin/
+* API: https://uptime.amalbabu.live/monitor/
 
 ## Tech Stack
 
