@@ -1,3 +1,5 @@
+version: '3.9'
+
 services:
   app:
     build:
@@ -12,8 +14,27 @@ services:
       - DB_PASS=${DB_PASS}
       - SECRET_KEY=${SECRET_KEY}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - DJANGO_SETTINGS_MODULE=app.settings
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.75'
+          memory: 512M
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   db:
     image: postgres:14.5-alpine3.16
@@ -24,6 +45,20 @@ services:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASS}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+    networks:
+      - app-network
+    security_opt:
+      - no-new-privileges:true
 
   proxy:
     build:
@@ -32,32 +67,105 @@ services:
     depends_on:
       - app
     ports:
-      # - 443:8000
-      - 80:80
-      - 443:443
+      - "80:80"
+      - "443:443"
     volumes:
-      - static-data:/vol/static
-      - certbot-web:/vol/www
-      - proxy-dhparams:/vol/proxy
-      - certbot-certs:/etc/letsencrypt
+      - static-data:/vol/static:ro
+      - certbot-web:/vol/www:ro
+      - proxy-dhparams:/vol/proxy:ro
+      - certbot-certs:/etc/letsencrypt:ro
     environment:
-     # TODO: domain or allowed hosts
       - DOMAIN=${DOMAIN}
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+
   redis:
     image: redis:6.2-alpine
     restart: always
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
 
   celery:
     build:
       context: .
     command: celery -A app worker --loglevel=info
     restart: always
+    volumes:
+      - ./app:/app:ro
     environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DJANGO_SETTINGS_MODULE=app.settings
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
     depends_on:
-      - redis
-      - db
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.75'
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+
+  celery-beat:
+    build:
+      context: .
+    command: celery -A app beat --loglevel=info
+    restart: always
+    volumes:
+      - ./app:/app:ro
+    environment:
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DJANGO_SETTINGS_MODULE=app.settings
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
 
   certbot:
     build:
@@ -71,11 +179,27 @@ services:
       - certbot-certs:/etc/letsencrypt/
     depends_on:
       - proxy
-  
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 128M
 
 volumes:
   postgres-data:
+    driver: local
   static-data:
+    driver: local
   certbot-web:
+    driver: local
   proxy-dhparams:
+    driver: local
   certbot-certs:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
