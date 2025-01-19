@@ -10,10 +10,7 @@ COPY ./scripts /scripts
 WORKDIR /app
 EXPOSE 8000
 
-RUN mkdir -p /var/run/celery && \
-    chown -R app:app /var/run/celery && \
-    chmod -R 755 /var/run/celery
-
+# Install dependencies and create user
 RUN python -m venv /py && \ 
     /py/bin/pip install --upgrade pip && \
     apk add --update --no-cache postgresql-client && \
@@ -28,9 +25,13 @@ RUN python -m venv /py && \
     chmod -R 755 /vol && \
     chmod -R +x /scripts
 
+# Setup Celery directories with more permissive rights
+RUN mkdir -p /var/run/celery && \
+    chown -R app:app /var/run/celery && \
+    chmod -R 777 /var/run/celery
 
 ENV PATH="/scripts:/py/bin:$PATH"
 
 USER app
 
-CMD [ "run.sh" ]
+CMD ["run.sh"]

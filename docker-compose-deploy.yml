@@ -104,6 +104,7 @@ services:
       - app-network
     volumes:
       - ./app:/app
+      - celerybeat-data:/var/run/celery
     environment:
       <<: *common-variables
     depends_on:
