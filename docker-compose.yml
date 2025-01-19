@@ -5,15 +5,14 @@ services:
     build: 
       context: .
     command: > 
-             sh -c "python manage.py wait_for_db && 
-             python manage.py migrate && 
-             python manage.py runserver  0.0.0.0:8000"
+      sh -c "python manage.py wait_for_db &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
     ports:
-      - 8000:8000
+      - "8000:8000"
     volumes:
       - ./app:/app
       - ./data/web:/vol/web
-      - ./wait-for-it.sh:/wait-for-it.sh
     environment:
       - DJANGO_SETTINGS_MODULE=app.settings
       - SECRET_KEY=django-insecure-*4=x=sgfb^i#%tr5y72#5=pd8f!i%b8-#ize6p=ddgk--%h&uZ
@@ -27,10 +26,12 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
-      - db
-      - redis
-      - celery
-      - celery-beat
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
 
   db:
     image: postgres:14.5-alpine3.16
@@ -39,37 +40,79 @@ services:
       - POSTGRES_USER=devuser
       - POSTGRES_PASSWORD=changeme
     ports:
-      - 5432:5432
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devuser -d devdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
 
   redis:
     image: redis:6.2-alpine
     ports:
-      - 6379:6379
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
 
   celery:
-    build: .
+    build: 
+      context: .
     command: celery -A app worker --loglevel=info
     volumes:
       - ./app:/app
-      - ./wait-for-it.sh:/wait-for-it.sh
     environment:
       - DJANGO_SETTINGS_MODULE=app.settings
+      - DB_HOST=db
+      - DB_NAME=devdb
+      - DB_USER=devuser
+      - DB_PASS=changeme
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
 
   celery-beat:
-    build: .
+    build: 
+      context: .
     command: celery -A app beat --loglevel=info
     volumes:
       - ./app:/app
-      - ./wait-for-it.sh:/wait-for-it.sh
     environment:
       - DJANGO_SETTINGS_MODULE=app.settings
+      - DB_HOST=db
+      - DB_NAME=devdb
+      - DB_USER=devuser
+      - DB_PASS=changeme
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  app-network:
+    driver: bridge
