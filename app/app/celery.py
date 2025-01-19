@@ -20,6 +20,6 @@ app.autodiscover_tasks()
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     # Calls check_site_status() every 10 minutes
-    sender.add_periodic_task(60.0, sender.signature('monitor.tasks.check_site_status'), name='check site----------------- status every 1 minute')
+    sender.add_periodic_task(300.0, sender.signature('monitor.tasks.check_site_status'), name='check site----------------- status every 5 minute')
     # Calls print_hello() every minute
-    sender.add_periodic_task(60.0, sender.signature('monitor.tasks.print_hello'), name='print hello every minute')
+    # sender.add_periodic_task(60.0, sender.signature('monitor.tasks.print_hello'), name='print hello every minute')
