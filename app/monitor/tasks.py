@@ -32,7 +32,7 @@ def check_site_status():
 
             # Notify if status changed (either up or down)
             if status_change:
-                message = "🟢Site is back online." if current_status == 'up' else "Site is unreachable."
+                message = " 🟢 Site is back online." if current_status == 'up' else "Site is unreachable."
                 notify_discord.delay(site.name, current_status, message)
 
         except requests.RequestException as e:
@@ -55,8 +55,9 @@ def check_site_status():
             logger.error(error_message)
             
             if status_change:
-                notify_discord.delay(site.name, current_status, f"🔴Site is unreachable: {str(e)}")
+                notify_discord.delay(site.name, current_status, f" 🔴 Site is unreachable \nlog:{str(e)}")
     logger.info("Finished task: check_site_status")
+    
 @shared_task
 def notify_discord(site_name, status, message):
     logger.info(f"Starting task: notify_discord for {site_name}")

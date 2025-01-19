@@ -1,9 +1,10 @@
 from django.db import models
 
+# FIXME: check interval feature not implemented
 class Site(models.Model):
     url = models.URLField(unique=True)
     name = models.CharField(max_length=255, blank=True, null=True)
-    check_interval_seconds = models.IntegerField(default=300)
+    # check_interval_seconds = models.IntegerField(default=300)
     expected_status_code = models.IntegerField(default=200)
     created_at = models.DateTimeField(auto_now_add=True)
 
