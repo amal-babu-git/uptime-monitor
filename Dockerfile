@@ -21,14 +21,12 @@ RUN python -m venv /py && \
     adduser --disabled-password --no-create-home app && \
     mkdir -p /vol/web/static && \
     mkdir -p /vol/web/media && \
+    mkdir -p /var/run/celery && \
     chown -R app:app /vol && \
-    chmod -R 755 /vol && \
-    chmod -R +x /scripts
-
-# Setup Celery directories with more permissive rights
-RUN mkdir -p /var/run/celery && \
     chown -R app:app /var/run/celery && \
-    chmod -R 777 /var/run/celery
+    chmod -R 755 /vol && \
+    chmod -R 777 /var/run/celery && \
+    chmod -R +x /scripts
 
 ENV PATH="/scripts:/py/bin:$PATH"
 
