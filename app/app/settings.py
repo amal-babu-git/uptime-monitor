@@ -45,7 +45,7 @@ else:
     CORS_ALLOWED_ORIGINS = [
         "https://*.amalbabu.live",
         "https://monitor.amalbabu.live",
-        'https://uptime.amalbabu.live/',
+        'https://uptime.amalbabu.live',
         "https://*.web.app",
     ]
 
