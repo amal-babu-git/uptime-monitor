@@ -36,6 +36,8 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     'https://*.amalbabu.live/',
     'https://monitor.amalbabu.live/',
+    'https://uptime.amalbabu.live/',
+
 ]
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
@@ -43,6 +45,7 @@ else:
     CORS_ALLOWED_ORIGINS = [
         "https://*.amalbabu.live",
         "https://monitor.amalbabu.live",
+        'https://uptime.amalbabu.live/',
         "https://*.web.app",
     ]
 
