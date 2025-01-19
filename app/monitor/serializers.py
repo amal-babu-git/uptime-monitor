@@ -4,7 +4,7 @@ from .models import Site, SiteStatusHistory, Webhook
 class SiteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Site
-        fields = ['id', 'url', 'name', 'check_interval_seconds', 'expected_status_code', ]
+        fields = ['id', 'url', 'name', 'expected_status_code', ]
 
 class SiteStatusHistorySerializer(serializers.ModelSerializer):
     class Meta:
