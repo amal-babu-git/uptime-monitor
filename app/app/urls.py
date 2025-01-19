@@ -22,6 +22,9 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('monitor/', include('monitor.urls')),
+    path('auth/', include('djoser.urls')),
+    path('auth/', include('djoser.urls.jwt')),
+    path('user/', include('user.urls')),
 ]
 
 if settings.DEBUG:

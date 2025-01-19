@@ -7,6 +7,41 @@ This project provides a simple uptime monitoring service that checks the availab
 * admin: https://uptime.amalbabu.live/admin/
 * API: https://uptime.amalbabu.live/monitor/
 
+## API Endpoints
+
+### Sites Management
+```
+GET     /monitor/sites/                  - List all monitored sites
+POST    /monitor/sites/                  - Add a new site to monitor
+GET     /monitor/sites/{id}/            - Get site details
+PUT     /monitor/sites/{id}/            - Update site details
+DELETE  /monitor/sites/{id}/            - Remove site from monitoring
+GET     /monitor/sites/{id}/history/    - Get status history for a site
+```
+
+### Webhook Management
+```
+GET     /monitor/webhooks/              - List all Discord webhooks
+POST    /monitor/webhooks/              - Add a new webhook
+GET     /monitor/webhooks/{id}/         - Get webhook details
+PUT     /monitor/webhooks/{id}/         - Update webhook
+DELETE  /monitor/webhooks/{id}/         - Delete webhook
+```
+### Authentication & User Management
+```
+POST    /auth/token/                    - Obtain JWT token
+POST    /auth/token/refresh/            - Refresh JWT token
+POST    /auth/users/                    - Register new user
+GET     /auth/users/me/                 - Get current user details
+```
+
+### User Profile
+```
+GET     /user/me/                       - Get user profile
+PUT     /user/me/                       - Update user profile
+```
+
+
 ## Tech Stack
 
 - **Django**: Web framework for backend development.

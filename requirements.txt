@@ -8,3 +8,5 @@ requests
 django-celery-beat
 uWSGI
 flower
+djoser
+djangorestframework_simplejwt
