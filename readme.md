@@ -3,7 +3,7 @@
 This project provides a simple uptime monitoring service that checks the availability of websites and sends notifications through Discord webhooks when a site goes down or recovers. The system allows adding/removing websites to monitor, configuring a check interval, and tracks uptime/downtime history. A Discord notification is sent whenever a site's status changes.
 
 ### Live Server
-> **Warning**: The live server may go down occasionally for experimental purposes and some APIs may not be fully implemented. For a reliable service, please consider self-hosting using the instructions below.
+> **Warning**: This demo server may go down without notice. For a reliable service, please self-host using the instructions below.
 
 * admin: https://uptime.amalbabu.live/admin/
 * API: https://uptime.amalbabu.live/monitor/
