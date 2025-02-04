@@ -6,14 +6,15 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser, IsAuthentic
 from rest_framework.response import Response
 from rest_framework.permissions import SAFE_METHODS
 
+# FIXME - Add permissions to the viewsets
 class SiteViewSet(viewsets.ModelViewSet):
     queryset = Site.objects.all()
     serializer_class = SiteSerializer
 
-    # def get_permissions(self):
-    #     if self.request.method in SAFE_METHODS:
-    #         return [IsAuthenticatedOrReadOnly()]
-    #     return [IsAdminUser()]
+    def get_permissions(self):
+        if self.request.method in SAFE_METHODS:
+            return [IsAuthenticatedOrReadOnly()]
+        return [IsAdminUser()]
 
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
@@ -25,4 +26,4 @@ class SiteViewSet(viewsets.ModelViewSet):
 class WebhookViewSet(viewsets.ModelViewSet):
     queryset = Webhook.objects.all()
     serializer_class = WebhookSerializer
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
